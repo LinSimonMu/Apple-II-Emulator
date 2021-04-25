@@ -9,13 +9,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\Src\6502\M6502.h">
-      <Filter>6502</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\Src\6502\M6502.cpp">
+    <ClCompile Include="..\CPU_Test.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Src\DeviceEmulatorLayer\CPU\MOS6502\M6502.cpp">
       <Filter>6502</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Src\DeviceEmulatorLayer\CPU\MOS6502\M6502.h">
+      <Filter>6502</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
