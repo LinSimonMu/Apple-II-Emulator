@@ -20,5 +20,8 @@
     <ClInclude Include="..\..\..\Src\DeviceEmulatorLayer\CPU\MOS6502\M6502.h">
       <Filter>6502</Filter>
     </ClInclude>
+    <ClInclude Include="..\LDA\LDA_TEST.h">
+      <Filter>Test</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

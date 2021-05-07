@@ -27,6 +27,35 @@ M6502::~M6502()
     delete P; 
 }
 
+M6502& M6502::operator=(const M6502& m6502)
+{
+    if (this == &m6502)
+    {
+        return *this;
+    }
+    delete PC;
+    delete SP;
+    delete A;
+    delete X;
+    delete Y;
+    delete P;
+
+    PC = new Word;
+    SP = new Word;
+    A = new Byte;
+    X = new Byte;
+    Y = new Byte;
+    P = new StatusReg;
+
+    *PC = *(m6502.PC);
+    *SP = *(m6502.SP);
+    *A = *(m6502.A);
+    *X = *(m6502.X);
+    *Y = *(m6502.Y);
+    *P = *(m6502.P);
+    mem = m6502.mem;
+}
+
 /* Function Name:       reset
  * Func Description:    When boot on,some registers are initialized
  * Paramters:           [void]
@@ -73,13 +102,15 @@ void M6502::reset()
 /* Function Name:       exec
  * Func Description:    Execute the instructions from PC
  * Paramters:           [Cycles] cycles: the cycles that instructions need to take
- * Return:              [void] 
+ * Return:              [Cycles] the actual cycles that exec used
  * Usage:
  * Appendix:            http://www.obelisk.me.uk/6502/instructions.html
  */
 
-void M6502::exec(Cycles cycles)
+Cycles M6502::exec(Cycles cycles)
 {
+    Cycles totalCycles = cycles;
+    Cycles usingCycles = 0;
     while (cycles > 0)
     {
         Byte ins = fetch(cycles);  //fetch instruction. 1 cycle
@@ -129,20 +160,20 @@ void M6502::exec(Cycles cycles)
         case INS_LDA_IM:                    //2cycles
             dataLow = fetch(cycles);        //fetch memory data read by PC. 1 cycle
             AssignReg(A, dataLow);          //transfer the data to A register
-            AssignSRegFlagWhenDoLDAIns();   //change the P's flag N and Z
+            AssignPRegFlagWhenDoLDAIns();   //change the P's flag N and Z
             break;
         case INS_LDA_ZP:                        //3 cycles
             dataLow = fetch(cycles);            //fetch the zero page address. 1 cycle
             dataLow = seek(cycles, dataLow);    //seek the data by the zero page address. 1 cycle
             AssignReg(A, dataLow);
-            AssignSRegFlagWhenDoLDAIns();       //change the P's flag N and Z
+            AssignPRegFlagWhenDoLDAIns();       //change the P's flag N and Z
             break;
         case INS_LDA_ZPX:                       //4 cycles
             dataLow = fetch(cycles);            //fetch the zero page address. 1 cycle
             dataLow += GetReg(X); cycles--;     //offset the address by X register. 1 cycle
             dataLow = seek(cycles, dataLow);    //seek the data by the zero page address. 1 cycle
             AssignReg(A, dataLow);
-            AssignSRegFlagWhenDoLDAIns();       //change the P's flag N and Z
+            AssignPRegFlagWhenDoLDAIns();       //change the P's flag N and Z
             break;
 /*
     * ### Jumps & Calls
@@ -190,6 +221,8 @@ void M6502::exec(Cycles cycles)
         
 #endif
     }
+    usingCycles = totalCycles - cycles;
+    return usingCycles;
 }
 
 void M6502::writeMem(MemAddr addr, Byte data)
@@ -201,6 +234,100 @@ Byte M6502::readMem(MemAddr addr)
 {
     return mem[addr];
 }
+
+Byte M6502::GetRegA(void)
+{
+    return GetReg(A);
+}
+
+Byte M6502::GetRegX(void)
+{
+    return GetReg(X);
+}
+
+Byte M6502::GetRegY(void)
+{
+    return GetReg(Y);
+}
+
+Byte M6502::GetRegP_N(void)
+{
+    return GetPRegFlag(P, N);
+}
+
+Byte M6502::GetRegP_V(void)
+{
+    return GetPRegFlag(P, V);
+}
+
+Byte M6502::GetRegP_B(void)
+{
+    return GetPRegFlag(P, B);
+}
+
+Byte M6502::GetRegP_D(void)
+{
+    return GetPRegFlag(P, D);
+}
+
+Byte M6502::GetRegP_I(void)
+{
+    return GetPRegFlag(P, I);
+}
+
+Byte M6502::GetRegP_Z(void)
+{
+    return GetPRegFlag(P, Z);
+}
+
+Byte M6502::GetRegP_C(void)
+{
+    return GetPRegFlag(P, C);
+}
+
+
+Word M6502::GetRegPC(void)
+{
+    return GetReg(PC);
+}
+
+Word M6502::GetRegSP(void)
+{
+    return GetReg(SP);
+}
+#ifdef CPU_TEST
+void M6502::WriteRegA(Byte regValue)
+{
+    AssignReg(A, regValue);
+}
+
+void M6502::WriteRegX(Byte regValue)
+{
+    AssignReg(X, regValue);
+}
+
+void M6502::WriteRegY(Byte regValue)
+{
+    AssignReg(Y, regValue);
+}
+
+void M6502::WriteRegP(Byte regValue)
+{
+}
+
+void M6502::WriteRegPC(Word regValue)
+{
+    AssignReg(PC, regValue);
+}
+
+void M6502::WriteRegSP(Word regValue)
+{
+    AssignReg(SP, regValue);
+}
+
+
+
+#endif
 
 /* Function Name:       fetch
  * Func Description:    fetch the instructions from mem by PC,then PC++,this operation can change the PC
@@ -257,16 +384,16 @@ MemAddr M6502::AddressConstraint(MemAddr addr)
     return addr;
 }
 
-/* Function Name:       AssignSRegFlagWhenDoLDAIns
+/* Function Name:       AssignPRegFlagWhenDoLDAIns
  * Func Description:    when do the operation LDA,the status register [P] N flag and Z flag is change
  * Paramters:           [void]
  * Return:              [void]
  * Usage:
  */
-void M6502::AssignSRegFlagWhenDoLDAIns(void)
+void M6502::AssignPRegFlagWhenDoLDAIns(void)
 {
-    AssignSRegFlag(P, Z, (GetReg(A) == 0));
-    AssignSRegFlag(P, N, ((GetReg(A) & 0b10000000) > 0));
+    AssignPRegFlag(P, Z, (GetReg(A) == 0));
+    AssignPRegFlag(P, N, ((GetReg(A) & 0b10000000) > 0));
 }
 
 Memory::Memory()
@@ -294,6 +421,15 @@ Byte Memory::operator[](MemAddr addr) const
 Byte& Memory::operator[](MemAddr addr)
 {
     return Mem[addr];
+}
+
+Memory& Memory::operator=(const Memory& memory)
+{
+    for (int i = 0; i < MAX_MEM_SIZE; i++)
+    {
+        Mem[i] = memory.Mem[i];
+    }
+    return *this;
 }
 
 Byte StatusReg::operator=(Byte p)

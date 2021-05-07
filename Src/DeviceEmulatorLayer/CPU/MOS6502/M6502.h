@@ -11,6 +11,8 @@
 #ifndef _M6502_H_
 #define _M6502_H_
 
+#define CPU_TEST
+
 #define Debug
 #ifdef Debug
 #include <stdio.h>
@@ -31,7 +33,8 @@ typedef unsigned short  MemAddr;
 typedef unsigned int    Cycles;
 #define AssignReg(reg,v)            (*reg) = v
 #define GetReg(reg)                 (*reg)
-#define AssignSRegFlag(P,Flag,v)    (P->Flag) = v
+#define AssignPRegFlag(P,Flag,v)    (P->Flag) = v
+#define GetPRegFlag(P,Flag)         (P->Flag)
 /* MOS 6502 CPU
  * https://en.wikipedia.org/wiki/MOS_Technology_6502
  * https://baike.baidu.com/item/MOS%206502/7603374
@@ -53,6 +56,7 @@ public:
     void init(void);
     Byte operator[](MemAddr addr) const;
     Byte& operator[](MemAddr addr);
+    Memory& operator=(const Memory& memory);
 private:
     Byte Mem[MAX_MEM_SIZE];
 
@@ -76,17 +80,38 @@ class M6502
 public:
     M6502();
     ~M6502();
+    M6502& operator=(const M6502& m6502);
 public:
     void reset(void);
-    void exec(Cycles cycles);
+    Cycles exec(Cycles cycles);
     void writeMem(MemAddr addr, Byte data);
     Byte readMem(MemAddr addr);
+    Byte GetRegA(void);
+    Byte GetRegX(void);
+    Byte GetRegY(void);
+    Byte GetRegP_N(void);
+    Byte GetRegP_V(void);
+    Byte GetRegP_B(void);
+    Byte GetRegP_D(void);
+    Byte GetRegP_I(void);
+    Byte GetRegP_Z(void);
+    Byte GetRegP_C(void);
+    Word GetRegPC(void);
+    Word GetRegSP(void);
+#ifdef CPU_TEST
+    void WriteRegA(Byte regValue);
+    void WriteRegX(Byte regValue);
+    void WriteRegY(Byte regValue);
+    void WriteRegP(Byte regValue);
+    void WriteRegPC(Word regValue);
+    void WriteRegSP(Word regValue);
+#endif
 private:
     Byte fetch(Cycles& cycles);
     Byte seek(Cycles& cycles,MemAddr addr);
     void write(Cycles& cycles, MemAddr addr,Byte dataWrite);
     MemAddr AddressConstraint(MemAddr addr);
-    void AssignSRegFlagWhenDoLDAIns(void);
+    void AssignPRegFlagWhenDoLDAIns(void);
 private:
     /*Registers*/
     Reg16 PC;  //Program Count 

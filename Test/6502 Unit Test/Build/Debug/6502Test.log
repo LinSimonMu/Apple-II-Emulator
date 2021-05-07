@@ -1,0 +1,8 @@
+﻿  CPU_Test.cpp
+GoogleTestLib.lib(gtest-death-test.obj) : warning LNK4099: 未找到 PDB“GoogleTestLib.pdb”(使用“GoogleTestLib.lib(gtest-death-test.obj)”或在“D:\Projects\Public\Earth\Apple-II-Emulator\Test\6502 Unit Test\Build\Debug\GoogleTestLib.pdb”中寻找)；正在链接对象，如同没有调试信息一样
+GoogleTestLib.lib(gtest-filepath.obj) : warning LNK4099: 未找到 PDB“”(使用“GoogleTestLib.lib(gtest-filepath.obj)”或在“”中寻找)；正在链接对象，如同没有调试信息一样
+GoogleTestLib.lib(gtest-port.obj) : warning LNK4099: 未找到 PDB“GoogleTestLib.pdb”(使用“GoogleTestLib.lib(gtest-port.obj)”或在“D:\Projects\Public\Earth\Apple-II-Emulator\Test\6502 Unit Test\Build\Debug\GoogleTestLib.pdb”中寻找)；正在链接对象，如同没有调试信息一样
+GoogleTestLib.lib(gtest-printers.obj) : warning LNK4099: 未找到 PDB“GoogleTestLib.pdb”(使用“GoogleTestLib.lib(gtest-printers.obj)”或在“D:\Projects\Public\Earth\Apple-II-Emulator\Test\6502 Unit Test\Build\Debug\GoogleTestLib.pdb”中寻找)；正在链接对象，如同没有调试信息一样
+GoogleTestLib.lib(gtest-test-part.obj) : warning LNK4099: 未找到 PDB“”(使用“GoogleTestLib.lib(gtest-test-part.obj)”或在“”中寻找)；正在链接对象，如同没有调试信息一样
+GoogleTestLib.lib(gtest.obj) : warning LNK4099: 未找到 PDB“GoogleTestLib.pdb”(使用“GoogleTestLib.lib(gtest.obj)”或在“D:\Projects\Public\Earth\Apple-II-Emulator\Test\6502 Unit Test\Build\Debug\GoogleTestLib.pdb”中寻找)；正在链接对象，如同没有调试信息一样
+  6502Test.vcxproj -> D:\Projects\Public\Earth\Apple-II-Emulator\Test\6502 Unit Test\Build\Debug\6502Test.exe
