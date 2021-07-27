@@ -1,2 +1,2 @@
 # Apple-II-Emulator
-This is a Apple ][ Emulator
+This is an Apple ][ Emulator
