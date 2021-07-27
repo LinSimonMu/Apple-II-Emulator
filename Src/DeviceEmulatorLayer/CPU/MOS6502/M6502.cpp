@@ -1,3 +1,13 @@
+/*
+ * Name:                    M6502.c
+ * Time:                    2021-7-16
+ * Corporation:             MOVE
+ * Website:                 Coming soon...
+ * Bilibili Homepage:       https://space.bilibili.com/204219698  MOVEÄ§ÎÝ
+ * TikTok(DouYin) ID:       689999795  MOVE
+ * Declaration:
+ */
+
 #include "M6502.h"
 
 namespace DeviceEmulatorLayer
@@ -99,6 +109,100 @@ void M6502::reset()
     mem.init();
 }
 
+
+ /* Function Name:       Addressing
+  * Func Description:    Get Address by addressing mode
+  * Paramters:           [Cycles] cycles: the cycles that get the address need to take
+  * Return:              [MemAddr] the address
+  * Usage:
+  * Appendix:            http://www.obelisk.me.uk/6502/addressing.html
+  */
+MemAddr M6502::Addressing(Cycles& cycles, Addr_Mode mode)
+{
+    Byte dataLow = 0;
+    Byte dataHigh = 0;
+    Word data16;
+    MemAddr addr = 0x0000;
+    switch (mode)
+    {
+    case Addr_Mode_RegA:   //Accumulator
+
+        break;
+    case Addr_Mode_IM:     //Immediate
+        addr = AddressConstraint((MemAddr)GetReg(PC)); //The immediate value followed by the instruction
+        AssignReg(PC, GetReg(PC) + 1);                 //Increase the PC value.
+        break;
+    case Addr_Mode_ZP:     //Zero Page
+        dataLow = fetch(cycles);
+        addr = (MemAddr)dataLow;
+        break;
+    case Addr_Mode_ZP_RegX:      //Zero Page,X
+        dataLow = fetch(cycles);            //fetch the zero page address. 1 cycle
+        dataLow += GetReg(X); cycles--;     //offset the address by X register. 1 cycle
+        addr = (MemAddr)dataLow;
+        break;
+    case Addr_Mode_ZP_RegY:                 //Zero Page,Y
+
+        break;
+    case Addr_Mode_REL:          //Relative
+
+        break;
+    case Addr_Mode_ABS:                     //Absolute
+        dataLow = fetch(cycles);            //fetch the low address. 1 cycle
+        dataHigh = fetch(cycles);           //fetch the high address. 1 cycle
+        data16 = dataLow;
+        data16 |= (dataHigh << 8);          //merge the address
+        addr = (MemAddr)data16;
+        break;
+    case Addr_Mode_ABS_RegX:                //Absolute,X
+        dataLow = fetch(cycles);            //fetch the low address. 1 cycle
+        dataHigh = fetch(cycles);           //fetch the high address. 1 cycle
+        data16 = dataLow;
+        data16 |= (dataHigh << 8);          //merge the address.
+        data16 += GetRegX();                //offset the adress by X register.  
+        if (GetRegX() >= 0xFF) cycles--;   //Cross page, take 1 cycle.
+        addr = (MemAddr)data16;
+        break;
+    case Addr_Mode_ABS_RegY:                //Absolute,Y
+        dataLow = fetch(cycles);            //fetch the low address. 1 cycle
+        dataHigh = fetch(cycles);           //fetch the high address. 1 cycle
+        data16 = dataLow;
+        data16 |= (dataHigh << 8);          //merge the address.
+        data16 += GetRegY();                //offset the adress by Y register.
+        if (GetRegY() >= 0xFF) cycles--;   //Cross page, take 1 cycle.
+        addr = (MemAddr)data16;
+        break;
+    case Addr_Mode_IND:          //Indirect
+        break;
+    case Addr_Mode_IND_RegX:                            //Indexed X Indirect
+        dataLow = fetch(cycles);                        //fetch the zero page address. 1 cycle
+        data16 = (MemAddr)dataLow + (MemAddr)GetRegX(); cycles--; //offset the address by resgister X,low address. 1 cycle
+        dataLow = seek(cycles, (MemAddr)(data16));      //Seek the low byte as low address. 1 cycle
+        data16 += 1;                                    //high address
+        dataHigh = seek(cycles, (MemAddr)(data16));     //Seek the high byte as high address. 1 cycle
+        data16 = dataLow;
+        data16 |= (dataHigh << 8);                      //merge the address.
+        addr = (MemAddr)data16;
+        break;
+    case Addr_Mode_IND_RegY:     //Indirect Indexed Y
+        dataLow = fetch(cycles);                        //fetch the zero page address. 1 cycle
+        data16 = (MemAddr)dataLow; //offset the address by resgister X,low address. 1 cycle
+        dataLow = seek(cycles, (MemAddr)(data16));      //Seek the low byte as low address. 1 cycle
+        data16 += 1;                                    //high address
+        dataHigh = seek(cycles, (MemAddr)(data16));     //Seek the high byte as high address. 1 cycle
+        data16 = dataLow;
+        data16 |= (dataHigh << 8);                      //merge the address.
+        data16 += GetRegY();                            //offset the address by register Y.
+        if (GetRegY() >= 0xFF) cycles--;                //Cross page, take 1 cycle.
+        addr = (MemAddr)data16;
+        break;
+
+    }
+
+    return addr;
+
+}
+
 /* Function Name:       exec
  * Func Description:    Execute the instructions from PC
  * Paramters:           [Cycles] cycles: the cycles that instructions need to take
@@ -107,33 +211,21 @@ void M6502::reset()
  * Appendix:            http://www.obelisk.me.uk/6502/instructions.html
  */
 
-Cycles M6502::exec(Cycles cycles)
-{
-    Cycles totalCycles = cycles;
-    Cycles usingCycles = 0;
-    while (cycles > 0)
-    {
-        Byte ins = fetch(cycles);  //fetch instruction. 1 cycle
-        Byte dataLow = 0;
-        Byte dataHigh = 0;
-        Word data16;
-        switch (ins)
-        {
-/*
- * Load/Store Operations
- * These instructions transfer a single byte between memory and one of the registers. 
- * Load operations set the negative (N) and zero (Z) flags depending on the value of transferred.
- * Store operations do not affect the flag settings.
- * | [LDA] | Load Accumulator  | [N],[Z] |
- * | [LDX] | Load X Register   | [N],[Z] |
- * | [LDY] | Load Y Register   | [N],[Z] |
- * | [STA] | Store Accumulator |         |
- * | [STX] | Store X Register  |         |
- * | [STY] | Store Y Register  |         |
- * 
- */
+ /*
+  * Load/Store Operations
+  * These instructions transfer a single byte between memory and one of the registers.
+  * Load operations set the negative (N) and zero (Z) flags depending on the value of transferred.
+  * Store operations do not affect the flag settings.
+  * | [LDA] | Load Accumulator  | [N],[Z] |
+  * | [LDX] | Load X Register   | [N],[Z] |
+  * | [LDY] | Load Y Register   | [N],[Z] |
+  * | [STA] | Store Accumulator |         |
+  * | [STX] | Store X Register  |         |
+  * | [STY] | Store Y Register  |         |
+  *
+  */
 
- /* *************************************** [LDA] * *************************************
+/* *************************************** [LDA] * *************************************
     *Loads a byte of memory into the accumulator setting the zeroand negative flags as appropriate.
     * C	Carry Flag	            Not affected
     * Z	Zero Flag	            Set if A = 0
@@ -157,69 +249,137 @@ Cycles M6502::exec(Cycles cycles)
     *******************************************************************************************
     *
     */
-        case INS_LDA_IM:                    //2cycles
-            dataLow = fetch(cycles);        //fetch memory data read by PC. 1 cycle
-            AssignReg(A, dataLow);          //transfer the data to A register
-            AssignPRegFlagWhenDoLDAIns();   //change the P's flag N and Z
-            break;
-        case INS_LDA_ZP:                        //3 cycles
-            dataLow = fetch(cycles);            //fetch the zero page address. 1 cycle
-            dataLow = seek(cycles, dataLow);    //seek the data by the zero page address. 1 cycle
-            AssignReg(A, dataLow);
-            AssignPRegFlagWhenDoLDAIns();       //change the P's flag N and Z
-            break;
-        case INS_LDA_ZPX:                       //4 cycles
-            dataLow = fetch(cycles);            //fetch the zero page address. 1 cycle
-            dataLow += GetReg(X); cycles--;     //offset the address by X register. 1 cycle
-            dataLow = seek(cycles, dataLow);    //seek the data by the zero page address. 1 cycle
-            AssignReg(A, dataLow);
-            AssignPRegFlagWhenDoLDAIns();       //change the P's flag N and Z
-            break;
+
 /*
-    * ### Jumps & Calls
-    * The following instructions modify the program counter causing a break to normal sequential execution.
-    * The [JSR] instruction pushes the old [PC]onto the stack before changing it to the new location
-    * allowing a subsequent [RTS] to return execution to the instruction after the call.
-    * | [JMP] | Jump to another location |      |
-    * | [JSR] | Jump to a subroutine     |      |
-    * | [RTS] | Return from subroutine   |      |
-    * ************************************** [JSR] **************************************
-    * The JSR instruction pushes the address (minus one) of the return point on to the stack and
-    * then sets the program counter to the target memory address.
-    * Processor Status after use:
-    * | [C] | [Carry Flag]            | Not affected |
-    * |-------------------------------|--------------|
-    * | [Z] | [Zero Flag]             | Not affected |
-    * | [I] | [Interrupt Disable]     | Not affected |
-    * | [D] | [Decimal Mode Flag]     | Not affected |
-    * | [B] | [Break Command]         | Not affected |
-    * | [V] | [Overflow Flag]         | Not affected |
-    * | [N] | [Negative Flag]         | Not affected |
-    * 
-    * |  Addressing Mode |  Opcode  |   Bytes   |   Cycles   |
-    * | -----------------| ---------| --------- | ---------- |
-    * | [Absolute]       | $20      | 3         | 6          |
-    */
+* ### Jumps & Calls
+* The following instructions modify the program counter causing a break to normal sequential execution.
+* The [JSR] instruction pushes the old [PC]onto the stack before changing it to the new location
+* allowing a subsequent [RTS] to return execution to the instruction after the call.
+* | [JMP] | Jump to another location |      |
+* | [JSR] | Jump to a subroutine     |      |
+* | [RTS] | Return from subroutine   |      |
+* ************************************** [JSR] **************************************
+* The JSR instruction pushes the address (minus one) of the return point on to the stack and
+* then sets the program counter to the target memory address.
+* Processor Status after use:
+* | [C] | [Carry Flag]            | Not affected |
+* |-------------------------------|--------------|
+* | [Z] | [Zero Flag]             | Not affected |
+* | [I] | [Interrupt Disable]     | Not affected |
+* | [D] | [Decimal Mode Flag]     | Not affected |
+* | [B] | [Break Command]         | Not affected |
+* | [V] | [Overflow Flag]         | Not affected |
+* | [N] | [Negative Flag]         | Not affected |
+*
+* |  Addressing Mode |  Opcode  |   Bytes   |   Cycles   |
+* | -----------------| ---------| --------- | ---------- |
+* | [Absolute]       | $20      | 3         | 6          |
+*/
+Cycles M6502::exec(Cycles cycles)
+{
+    Cycles totalCycles = cycles;
+    Cycles usingCycles = 0;
+    while (cycles > 0)
+    {
+        Byte dataByte = 0;
+        MemAddr addr = 0x0000;
+        Ins_Set_Type insSetType = Ins_Set_Type_Unknow;
+        Addr_Mode addrMode = Addr_Mode_IM;
+        LdSt_Reg ldstReg = LdSt_Reg_A;
+        LdStOpt_Type ldstOpt = LdStOpt_Load;
+
+        Byte ins = fetch(cycles);  //fetch instruction. 1 cycle
+
+        switch (ins)
+        {
+        case INS_LDA_IM:                                //2 cycles
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_IM;
+            break;
+        case INS_LDA_ZP:                                //3 cycles
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_ZP;
+            break;
+        case INS_LDA_ZP_X:                              //4 cycles
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_ZP_RegX;
+            break;
+        case INS_LDA_ABS:                               //4 cycles
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_ABS;
+            break;
+        case INS_LDA_ABS_X:                             //4 cycles (+1 if page crossed)
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_ABS_RegX;
+            break;
+        case INS_LDA_ABS_Y:                                 //4 cycles (+1 if page crossed)
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_ABS_RegY;
+            break;
+        case INS_LDA_IND_X:                                 //6 cycles, indrect way  means that the address is in mem
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_IND_RegX;
+            break;
+        case INS_LDA_IND_Y:                                 //5 cycles (+1 if page crossed), indrect way  means that the address is in mem
+            insSetType = Ins_Set_Type_LdStOpt;
+            ldstOpt = LdStOpt_Load;
+            ldstReg = LdSt_Reg_A;
+            addrMode = Addr_Mode_IND_RegY;
+            break;
+
         case INS_JSR:     //6 cycles
             //6502 is little endian low address low byte,high address high byte
-            dataLow = fetch(cycles);   //fecth the low address. 1 cycle
-            dataHigh = fetch(cycles);  //fetch the high address. 1 cycle
-            data16 = dataLow;
-            data16 |= (dataHigh << 8); //get the sub function addr
+            addr = Addressing(cycles, Addr_Mode_ABS);
 
             //save the original PC value to the satck,[preserve the scene]
             write(cycles, GetReg(SP), GetReg(PC) & 0xFF);   //write PC low byte to stack. 1 cycle
             AssignReg(SP, GetReg(SP) - 1);                  //SP = SP - 1
             write(cycles, GetReg(SP), GetReg(PC) >> 8);     //write PC high byte to stack. 1 cycle
             AssignReg(SP, GetReg(SP) - 1);                  //SP = SP - 1
-            AssignReg(PC, data16);                          //PC point to the Sub function address
+            AssignReg(PC, addr);                          //PC point to the Sub function address
             cycles--;                                       //1 cycle
+            break;
+        default:
+            printf("INS NOT HANDLE : %d\r\n", ins);
+            break;
+        }
+
+        switch (insSetType)
+        {
+        case Ins_Set_Type_LdStOpt:                      //Load/Store Operations, get address and then load or store
+            addr = Addressing(cycles, addrMode);        //Get address by addressing mode
+            dataByte = seek(cycles, addr);              //seek the data. 1 cycle
+            switch (ldstOpt)
+            {
+            case LdStOpt_Load:
+                Load2Reg(ldstReg, dataByte);
+                AssignPRegFlagWhenDoLDAIns();
+                break;
+            case LdStOpt_Store:
+                Store2Mem(ldstReg, dataByte);
+                break;
+            default:
+                break;
+            }
+            
+            break;
         default:
             break;
         }
-#ifdef Debug
-        
-#endif
     }
     usingCycles = totalCycles - cycles;
     return usingCycles;
@@ -314,7 +474,7 @@ void M6502::WriteRegY(Byte regValue)
 void M6502::WriteRegP(Byte regValue)
 {
 }
-
+ 
 void M6502::WriteRegPC(Word regValue)
 {
     AssignReg(PC, regValue);
@@ -324,8 +484,6 @@ void M6502::WriteRegSP(Word regValue)
 {
     AssignReg(SP, regValue);
 }
-
-
 
 #endif
 
@@ -394,6 +552,29 @@ void M6502::AssignPRegFlagWhenDoLDAIns(void)
 {
     AssignPRegFlag(P, Z, (GetReg(A) == 0));
     AssignPRegFlag(P, N, ((GetReg(A) & 0b10000000) > 0));
+}
+
+void M6502::Load2Reg(LdSt_Reg reg, Byte data)
+{
+    switch (reg)
+    {
+    case LdSt_Reg_A:
+        AssignReg(A, data);
+        break;
+    case LdSt_Reg_X:
+        AssignReg(X, data);
+        break;
+    case LdSt_Reg_Y:
+        AssignReg(X, data);
+        break;
+    default:
+        break;
+    }
+}
+
+void M6502::Store2Mem(LdSt_Reg reg, Byte data)
+{
+
 }
 
 Memory::Memory()

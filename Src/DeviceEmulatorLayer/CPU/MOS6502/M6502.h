@@ -43,9 +43,59 @@ namespace MOS6502
 {
 #define INS_LDA_IM       0xA9
 #define INS_LDA_ZP       0xA5
-#define INS_LDA_ZPX      0xB5
+#define INS_LDA_ZP_X     0xB5
+#define INS_LDA_ABS      0xAD
+#define INS_LDA_ABS_X    0xBD
+#define INS_LDA_ABS_Y    0xB9
+#define INS_LDA_IND_X    0xA1
+#define INS_LDA_IND_Y    0xB1
 
 #define INS_JSR          0x20
+
+enum LdSt_Reg
+{
+    LdSt_Reg_A = 0,
+    LdSt_Reg_X,
+    LdSt_Reg_Y,
+};
+
+enum Addr_Mode
+{
+    Addr_Mode_RegA = 0,     //Accumulator
+    Addr_Mode_IM,           //Immediate
+    Addr_Mode_ZP,           //Zero Page
+    Addr_Mode_ZP_RegX,      //Zero Page,X
+    Addr_Mode_ZP_RegY,      //Zero Page,Y
+    Addr_Mode_REL,          //Relative
+    Addr_Mode_ABS,          //Absolute
+    Addr_Mode_ABS_RegX,     //Absolute,X
+    Addr_Mode_ABS_RegY,     //Absolute,Y
+    Addr_Mode_IND,          //Indirect
+    Addr_Mode_IND_RegX,     //Indexed X Indirect
+    Addr_Mode_IND_RegY,     //Indirect Indexed Y
+};
+
+enum Ins_Set_Type
+{
+    Ins_Set_Type_Unknow = 0,    //Unknow
+    Ins_Set_Type_LdStOpt,       //Load/Store Operations
+    Ins_Set_Type_RegTrans,      //Register Transfers
+    Ins_Set_Type_StackOpt,      //Stack Operations
+    Ins_Set_Type_Logical,       //Logical
+    Ins_Set_Type_Arithmetic,    //Arithmetic
+    Ins_Set_Type_IncDec,        //Increments& Decrements
+    Ins_Set_Type_Shifts,        //Shifts
+    Ins_Set_Type_JmpCall,       //Jumps& Calls
+    Ins_Set_Type_Branches,      //Branches
+    Ins_Set_Type_SFChange,      //Status Flag Changes
+    Ins_Set_Type_SysFunc,       //System Functions
+};
+
+enum LdStOpt_Type
+{
+    LdStOpt_Load = 0,
+    LdStOpt_Store,
+};
 
 class Memory
 {
@@ -74,6 +124,7 @@ struct StatusReg
     Byte N : 1;  //Negative Flag      [0:Positive, 1:Negative]
     Byte operator=(Byte p);
 };
+
 typedef StatusReg* SReg8;
 class M6502
 {
@@ -107,11 +158,14 @@ public:
     void WriteRegSP(Word regValue);
 #endif
 private:
+    MemAddr Addressing(Cycles& cycles, Addr_Mode mode);
     Byte fetch(Cycles& cycles);
     Byte seek(Cycles& cycles,MemAddr addr);
     void write(Cycles& cycles, MemAddr addr,Byte dataWrite);
     MemAddr AddressConstraint(MemAddr addr);
     void AssignPRegFlagWhenDoLDAIns(void);
+    void Load2Reg(LdSt_Reg reg, Byte data);
+    void Store2Mem(LdSt_Reg reg, Byte data);
 private:
     /*Registers*/
     Reg16 PC;  //Program Count 
