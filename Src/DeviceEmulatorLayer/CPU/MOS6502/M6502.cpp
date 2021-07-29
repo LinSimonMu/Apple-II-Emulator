@@ -3,7 +3,7 @@
  * Time:                    2021-7-16
  * Corporation:             MOVE
  * Website:                 Coming soon...
- * Bilibili Homepage:       https://space.bilibili.com/204219698  MOVEÄ§ÎÝ
+ * Bilibili Homepage:       https://space.bilibili.com/204219698  MOVE é­”å±‹
  * TikTok(DouYin) ID:       689999795  MOVE
  * Declaration:
  */
