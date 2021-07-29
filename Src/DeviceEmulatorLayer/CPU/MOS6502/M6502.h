@@ -41,16 +41,32 @@ typedef unsigned int    Cycles;
  */
 namespace MOS6502
 {
-#define INS_LDA_IM       0xA9
-#define INS_LDA_ZP       0xA5
-#define INS_LDA_ZP_X     0xB5
-#define INS_LDA_ABS      0xAD
-#define INS_LDA_ABS_X    0xBD
-#define INS_LDA_ABS_Y    0xB9
-#define INS_LDA_IND_X    0xA1
-#define INS_LDA_IND_Y    0xB1
+enum Instructions
+{
+    INS_LDA_IM      = 0xA9,
+    INS_LDA_ZP      = 0xA5,
+    INS_LDA_ZP_X    = 0xB5,
+    INS_LDA_ABS     = 0xAD,
+    INS_LDA_ABS_X   = 0xBD,
+    INS_LDA_ABS_Y   = 0xB9,
+    INS_LDA_IND_X   = 0xA1,
+    INS_LDA_IND_Y   = 0xB1,
 
-#define INS_JSR          0x20
+    INS_LDX_IM      = 0xA2,
+    INS_LDX_ZP      = 0xA6,
+    INS_LDX_ZP_Y    = 0xB6,
+    INS_LDX_ABS     = 0xAE,
+    INS_LDX_ABS_Y   = 0xBE,
+
+    INS_LDY_IM      = 0xA0,
+    INS_LDY_ZP      = 0xA4,
+    INS_LDY_ZP_X    = 0xB4,
+    INS_LDY_ABS     = 0xAC,
+    INS_LDY_ABS_X   = 0xBC,
+
+    INS_JSR         = 0x20,
+};
+
 
 enum LdSt_Reg
 {
@@ -163,9 +179,9 @@ private:
     Byte seek(Cycles& cycles,MemAddr addr);
     void write(Cycles& cycles, MemAddr addr,Byte dataWrite);
     MemAddr AddressConstraint(MemAddr addr);
-    void AssignPRegFlagWhenDoLDAIns(void);
     void Load2Reg(LdSt_Reg reg, Byte data);
     void Store2Mem(LdSt_Reg reg, Byte data);
+    void UpdateStatusReg(Instructions ins);
 private:
     /*Registers*/
     Reg16 PC;  //Program Count 

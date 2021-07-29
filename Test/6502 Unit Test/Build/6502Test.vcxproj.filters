@@ -7,6 +7,12 @@
     <Filter Include="6502">
       <UniqueIdentifier>{406ff55d-9a52-4bbf-8f4c-765ea6e208ca}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Test\LoadStoreOpt">
+      <UniqueIdentifier>{4df6faf3-2ba3-4ed4-b295-e5b0a9e32d7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\InvaildIns">
+      <UniqueIdentifier>{17a90b41-abab-4e27-9d72-dcca96ebe536}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\CPU_Test.cpp">
@@ -20,8 +26,20 @@
     <ClInclude Include="..\..\..\Src\DeviceEmulatorLayer\CPU\MOS6502\M6502.h">
       <Filter>6502</Filter>
     </ClInclude>
-    <ClInclude Include="..\LDA\LDA_TEST.h">
+    <ClInclude Include="..\TEST_ENTRY.h">
       <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LoadStoreOpt\LDA_TEST.h">
+      <Filter>Test\LoadStoreOpt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LoadStoreOpt\LDX_TEST.h">
+      <Filter>Test\LoadStoreOpt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LoadStoreOpt\LDY_TEST.h">
+      <Filter>Test\LoadStoreOpt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InvaildIns\TEST_INVAILD_INS.h">
+      <Filter>Test\InvaildIns</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

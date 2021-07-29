@@ -148,7 +148,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Src\DeviceEmulatorLayer\CPU\MOS6502\M6502.h" />
-    <ClInclude Include="..\LDA\LDA_TEST.h" />
+    <ClInclude Include="..\InvaildIns\TEST_INVAILD_INS.h" />
+    <ClInclude Include="..\LoadStoreOpt\LDA_TEST.h" />
+    <ClInclude Include="..\LoadStoreOpt\LDX_TEST.h" />
+    <ClInclude Include="..\LoadStoreOpt\LDY_TEST.h" />
+    <ClInclude Include="..\TEST_ENTRY.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

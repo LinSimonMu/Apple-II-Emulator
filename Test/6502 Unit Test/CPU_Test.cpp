@@ -1,7 +1,9 @@
 #include <cstdio>
 #include "gtest/gtest.h"
-#include "6502 Unit Test/LDA/LDA_TEST.h"
-
+#include "../TEST_ENTRY.h"
+#include "LoadStoreOpt/LDA_TEST.h"
+#include "LoadStoreOpt/LDX_TEST.h"
+#include "LoadStoreOpt/LDY_TEST.h"
 
 GTEST_API_ int main(int argc, char** argv) {
     printf("Running main() from %s\n", __FILE__);

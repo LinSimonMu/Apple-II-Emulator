@@ -142,7 +142,10 @@ MemAddr M6502::Addressing(Cycles& cycles, Addr_Mode mode)
         addr = (MemAddr)dataLow;
         break;
     case Addr_Mode_ZP_RegY:                 //Zero Page,Y
-
+        dataLow = fetch(cycles);            //fetch the zero page address. 1 cycle
+        dataLow += GetReg(Y); cycles--;     //offset the address by X register. 1 cycle
+        addr = (MemAddr)dataLow;
+        break;
         break;
     case Addr_Mode_REL:          //Relative
 
@@ -226,15 +229,6 @@ MemAddr M6502::Addressing(Cycles& cycles, Addr_Mode mode)
   */
 
 /* *************************************** [LDA] * *************************************
-    *Loads a byte of memory into the accumulator setting the zeroand negative flags as appropriate.
-    * C	Carry Flag	            Not affected
-    * Z	Zero Flag	            Set if A = 0
-    * I	Interrupt Disable	    Not affected
-    * D	Decimal Mode Flag	    Not affected
-    * B	Break Command	        Not affected
-    * V	Overflow Flag	        Not affected
-    * N	Negative Flag	        Set if bit 7 of A is set
-    *
     *| Addressing Mode      | Opcode     | Bytes   | Cycles                 |
     *| -------------------- | -----------| --------| -----------------------|
     *| [Immediate]          | $A9        | 2       | 2                      |
@@ -262,15 +256,7 @@ MemAddr M6502::Addressing(Cycles& cycles, Addr_Mode mode)
 * The JSR instruction pushes the address (minus one) of the return point on to the stack and
 * then sets the program counter to the target memory address.
 * Processor Status after use:
-* | [C] | [Carry Flag]            | Not affected |
-* |-------------------------------|--------------|
-* | [Z] | [Zero Flag]             | Not affected |
-* | [I] | [Interrupt Disable]     | Not affected |
-* | [D] | [Decimal Mode Flag]     | Not affected |
-* | [B] | [Break Command]         | Not affected |
-* | [V] | [Overflow Flag]         | Not affected |
-* | [N] | [Negative Flag]         | Not affected |
-*
+
 * |  Addressing Mode |  Opcode  |   Bytes   |   Cycles   |
 * | -----------------| ---------| --------- | ---------- |
 * | [Absolute]       | $20      | 3         | 6          |
@@ -288,58 +274,127 @@ Cycles M6502::exec(Cycles cycles)
         LdSt_Reg ldstReg = LdSt_Reg_A;
         LdStOpt_Type ldstOpt = LdStOpt_Load;
 
-        Byte ins = fetch(cycles);  //fetch instruction. 1 cycle
+        Instructions ins = (Instructions)fetch(cycles);  //fetch instruction. 1 cycle
 
         switch (ins)
         {
-        case INS_LDA_IM:                                //2 cycles
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_IM;
-            break;
-        case INS_LDA_ZP:                                //3 cycles
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_ZP;
-            break;
-        case INS_LDA_ZP_X:                              //4 cycles
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_ZP_RegX;
-            break;
-        case INS_LDA_ABS:                               //4 cycles
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_ABS;
-            break;
-        case INS_LDA_ABS_X:                             //4 cycles (+1 if page crossed)
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_ABS_RegX;
-            break;
-        case INS_LDA_ABS_Y:                                 //4 cycles (+1 if page crossed)
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_ABS_RegY;
-            break;
-        case INS_LDA_IND_X:                                 //6 cycles, indrect way  means that the address is in mem
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_IND_RegX;
-            break;
-        case INS_LDA_IND_Y:                                 //5 cycles (+1 if page crossed), indrect way  means that the address is in mem
-            insSetType = Ins_Set_Type_LdStOpt;
-            ldstOpt = LdStOpt_Load;
-            ldstReg = LdSt_Reg_A;
-            addrMode = Addr_Mode_IND_RegY;
-            break;
+            //LDA
+            {
+            case INS_LDA_IM:                                //2 cycles
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_IM;
+                break;
+            case INS_LDA_ZP:                                //3 cycles
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_ZP;
+                break;
+            case INS_LDA_ZP_X:                              //4 cycles
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_ZP_RegX;
+                break;
+            case INS_LDA_ABS:                               //4 cycles
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_ABS;
+                break;
+            case INS_LDA_ABS_X:                             //4 cycles (+1 if page crossed)
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_ABS_RegX;
+                break;
+            case INS_LDA_ABS_Y:                                 //4 cycles (+1 if page crossed)
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_ABS_RegY;
+                break;
+            case INS_LDA_IND_X:                                 //6 cycles, indrect way  means that the address is in mem
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_IND_RegX;
+                break;
+            case INS_LDA_IND_Y:                                 //5 cycles (+1 if page crossed), indrect way  means that the address is in mem
+                insSetType = Ins_Set_Type_LdStOpt;
+                ldstOpt = LdStOpt_Load;
+                ldstReg = LdSt_Reg_A;
+                addrMode = Addr_Mode_IND_RegY;
+                break;
+            }
+            //LDX
+            {
+                case INS_LDX_IM:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_X;
+                    addrMode = Addr_Mode_IM;
+                    break;
+                case INS_LDX_ZP:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_X;
+                    addrMode = Addr_Mode_ZP;
+                    break;
+                case INS_LDX_ZP_Y:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_X;
+                    addrMode = Addr_Mode_ZP_RegY;
+                    break;
+                case INS_LDX_ABS:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_X;
+                    addrMode = Addr_Mode_ABS;
+                    break;
+                case INS_LDX_ABS_Y:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_X;
+                    addrMode = Addr_Mode_ABS_RegY;
+                    break;
+            }
+            //LDY
+            {
+                case INS_LDY_IM:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_Y;
+                    addrMode = Addr_Mode_IM;
+                    break;
+                case INS_LDY_ZP:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_Y;
+                    addrMode = Addr_Mode_ZP;
+                    break;
+                case INS_LDY_ZP_X:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_Y;
+                    addrMode = Addr_Mode_ZP_RegX;
+                    break;
+                case INS_LDY_ABS:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_Y;
+                    addrMode = Addr_Mode_ABS;
+                    break;
+                case INS_LDY_ABS_X:
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Load;
+                    ldstReg = LdSt_Reg_Y;
+                    addrMode = Addr_Mode_ABS_RegX;
+                    break;
+            }
 
         case INS_JSR:     //6 cycles
             //6502 is little endian low address low byte,high address high byte
@@ -354,7 +409,8 @@ Cycles M6502::exec(Cycles cycles)
             cycles--;                                       //1 cycle
             break;
         default:
-            printf("INS NOT HANDLE : %d\r\n", ins);
+            insSetType = Ins_Set_Type_Unknow;
+            
             break;
         }
 
@@ -367,7 +423,6 @@ Cycles M6502::exec(Cycles cycles)
             {
             case LdStOpt_Load:
                 Load2Reg(ldstReg, dataByte);
-                AssignPRegFlagWhenDoLDAIns();
                 break;
             case LdStOpt_Store:
                 Store2Mem(ldstReg, dataByte);
@@ -377,9 +432,14 @@ Cycles M6502::exec(Cycles cycles)
             }
             
             break;
+        case Ins_Set_Type_Unknow:
+            printf("INS NOT HANDLE : %d\r\n", ins);
+            break;
         default:
             break;
         }
+
+        UpdateStatusReg(ins);
     }
     usingCycles = totalCycles - cycles;
     return usingCycles;
@@ -542,18 +602,6 @@ MemAddr M6502::AddressConstraint(MemAddr addr)
     return addr;
 }
 
-/* Function Name:       AssignPRegFlagWhenDoLDAIns
- * Func Description:    when do the operation LDA,the status register [P] N flag and Z flag is change
- * Paramters:           [void]
- * Return:              [void]
- * Usage:
- */
-void M6502::AssignPRegFlagWhenDoLDAIns(void)
-{
-    AssignPRegFlag(P, Z, (GetReg(A) == 0));
-    AssignPRegFlag(P, N, ((GetReg(A) & 0b10000000) > 0));
-}
-
 void M6502::Load2Reg(LdSt_Reg reg, Byte data)
 {
     switch (reg)
@@ -565,7 +613,7 @@ void M6502::Load2Reg(LdSt_Reg reg, Byte data)
         AssignReg(X, data);
         break;
     case LdSt_Reg_Y:
-        AssignReg(X, data);
+        AssignReg(Y, data);
         break;
     default:
         break;
@@ -575,6 +623,77 @@ void M6502::Load2Reg(LdSt_Reg reg, Byte data)
 void M6502::Store2Mem(LdSt_Reg reg, Byte data)
 {
 
+}
+
+/*  *************************************** [LDA] * *************************************
+    *Loads a byte of memory into the accumulator setting the zeroand negative flags as appropriate.
+    * C	Carry Flag	            Not affected
+    * Z	Zero Flag	            Set if A = 0
+    * I	Interrupt Disable	    Not affected
+    * D	Decimal Mode Flag	    Not affected
+    * B	Break Command	        Not affected
+    * V	Overflow Flag	        Not affected
+    * N	Negative Flag	        Set if bit 7 of A is set
+    * 
+    * 
+    *
+    * ************************************* [JSR] **************************************
+    * The JSR instruction pushes the address (minus one) of the return point on to the stack and
+    * then sets the program counter to the target memory address.
+    * Processor Status after use:
+    * | [C] | [Carry Flag]            | Not affected |
+    * |-------------------------------|--------------|
+    * | [Z] | [Zero Flag]             | Not affected |
+    * | [I] | [Interrupt Disable]     | Not affected |
+    * | [D] | [Decimal Mode Flag]     | Not affected |
+    * | [B] | [Break Command]         | Not affected |
+    * | [V] | [Overflow Flag]         | Not affected |
+    * | [N] | [Negative Flag]         | Not affected |
+ */
+
+
+ /* Function Name:       UpdateStatusReg
+  * Func Description:    when do some instruction,the status register may change.
+  * Paramters:           [Instructions] ins: the instruction executed.
+  * Return:              [void]
+  * Usage:
+  */
+void M6502::UpdateStatusReg(Instructions ins)
+{
+    switch (ins)
+    {
+    case INS_LDA_IM:
+    case INS_LDA_ZP:
+    case INS_LDA_ZP_X:
+    case INS_LDA_ABS:
+    case INS_LDA_ABS_X:
+    case INS_LDA_ABS_Y:
+    case INS_LDA_IND_X:
+    case INS_LDA_IND_Y:
+        AssignPRegFlag(P, Z, (GetReg(A) == 0));
+        AssignPRegFlag(P, N, ((GetReg(A) & 0b10000000) > 0));
+        break;
+
+    case INS_LDX_IM:
+    case INS_LDX_ZP:
+    case INS_LDX_ZP_Y:
+    case INS_LDX_ABS:
+    case INS_LDX_ABS_Y:
+        AssignPRegFlag(P, Z, (GetReg(X) == 0));
+        AssignPRegFlag(P, N, ((GetReg(X) & 0b10000000) > 0));
+        break;
+
+    case INS_LDY_IM:
+    case INS_LDY_ZP:
+    case INS_LDY_ZP_X:
+    case INS_LDY_ABS:
+    case INS_LDY_ABS_X:
+        AssignPRegFlag(P, Z, (GetReg(Y) == 0));
+        AssignPRegFlag(P, N, ((GetReg(Y) & 0b10000000) > 0));
+        break;
+    case INS_JSR:
+        break;
+    }
 }
 
 Memory::Memory()
