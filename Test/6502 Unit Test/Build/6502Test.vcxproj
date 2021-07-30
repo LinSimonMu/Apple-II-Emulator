@@ -152,6 +152,9 @@
     <ClInclude Include="..\LoadStoreOpt\LDA_TEST.h" />
     <ClInclude Include="..\LoadStoreOpt\LDX_TEST.h" />
     <ClInclude Include="..\LoadStoreOpt\LDY_TEST.h" />
+    <ClInclude Include="..\LoadStoreOpt\STA_TEST.h" />
+    <ClInclude Include="..\LoadStoreOpt\STX_TEST.h" />
+    <ClInclude Include="..\LoadStoreOpt\STY_TEST.h" />
     <ClInclude Include="..\TEST_ENTRY.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

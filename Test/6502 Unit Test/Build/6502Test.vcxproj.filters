@@ -41,5 +41,14 @@
     <ClInclude Include="..\InvaildIns\TEST_INVAILD_INS.h">
       <Filter>Test\InvaildIns</Filter>
     </ClInclude>
+    <ClInclude Include="..\LoadStoreOpt\STA_TEST.h">
+      <Filter>Test\LoadStoreOpt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LoadStoreOpt\STX_TEST.h">
+      <Filter>Test\LoadStoreOpt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LoadStoreOpt\STY_TEST.h">
+      <Filter>Test\LoadStoreOpt</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

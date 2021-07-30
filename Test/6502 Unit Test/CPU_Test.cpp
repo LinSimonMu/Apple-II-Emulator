@@ -4,6 +4,7 @@
 #include "LoadStoreOpt/LDA_TEST.h"
 #include "LoadStoreOpt/LDX_TEST.h"
 #include "LoadStoreOpt/LDY_TEST.h"
+#include "LoadStoreOpt/STA_TEST.h"
 
 GTEST_API_ int main(int argc, char** argv) {
     printf("Running main() from %s\n", __FILE__);

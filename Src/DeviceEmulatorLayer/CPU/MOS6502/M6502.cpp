@@ -396,6 +396,53 @@ Cycles M6502::exec(Cycles cycles)
                     break;
             }
 
+
+            //STA
+            {
+                case INS_STA_ZP:                                //3 cycles
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Store;
+                    ldstReg = LdSt_Reg_A;
+                    addrMode = Addr_Mode_ZP;
+                    break;
+                case INS_STA_ZP_X:                              //4 cycles
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Store;
+                    ldstReg = LdSt_Reg_A;
+                    addrMode = Addr_Mode_ZP_RegX;
+                    break;
+                case INS_STA_ABS:                               //4 cycles
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Store;
+                    ldstReg = LdSt_Reg_A;
+                    addrMode = Addr_Mode_ABS;
+                    break;
+                case INS_STA_ABS_X:                             //5 cycles
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Store;
+                    ldstReg = LdSt_Reg_A;
+                    addrMode = Addr_Mode_ABS_RegX;
+                    break;
+                case INS_STA_ABS_Y:                                 //5 cycles
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Store;
+                    ldstReg = LdSt_Reg_A;
+                    addrMode = Addr_Mode_ABS_RegY;
+                    break;
+                case INS_STA_IND_X:                                 //6 cycles, indrect way  means that the address is in mem
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Store;
+                    ldstReg = LdSt_Reg_A;
+                    addrMode = Addr_Mode_IND_RegX;
+                    break;
+                case INS_STA_IND_Y:                                 //6 cycles
+                    insSetType = Ins_Set_Type_LdStOpt;
+                    ldstOpt = LdStOpt_Store;
+                    ldstReg = LdSt_Reg_A;
+                    addrMode = Addr_Mode_IND_RegY;
+                    break;
+            }
+
         case INS_JSR:     //6 cycles
             //6502 is little endian low address low byte,high address high byte
             addr = Addressing(cycles, Addr_Mode_ABS);
@@ -418,14 +465,14 @@ Cycles M6502::exec(Cycles cycles)
         {
         case Ins_Set_Type_LdStOpt:                      //Load/Store Operations, get address and then load or store
             addr = Addressing(cycles, addrMode);        //Get address by addressing mode
-            dataByte = seek(cycles, addr);              //seek the data. 1 cycle
             switch (ldstOpt)
             {
             case LdStOpt_Load:
+                dataByte = seek(cycles, addr);              //seek the data. 1 cycle
                 Load2Reg(ldstReg, dataByte);
                 break;
             case LdStOpt_Store:
-                Store2Mem(ldstReg, dataByte);
+                Store2Mem(addr, ldstReg);
                 break;
             default:
                 break;
@@ -602,6 +649,14 @@ MemAddr M6502::AddressConstraint(MemAddr addr)
     return addr;
 }
 
+/* Function Name:       Load2Reg
+ * Func Description:    Load the data from memory to register
+ * Paramters:           [LdSt_Reg] reg: the register need to be loaded to.
+ *                      [Byte    ] data: the data need to be loaded to register.
+ * Return:              [void    ]
+ * Usage:
+ */
+
 void M6502::Load2Reg(LdSt_Reg reg, Byte data)
 {
     switch (reg)
@@ -620,29 +675,62 @@ void M6502::Load2Reg(LdSt_Reg reg, Byte data)
     }
 }
 
-void M6502::Store2Mem(LdSt_Reg reg, Byte data)
-{
+/* Function Name:       Store2Mem
+ * Func Description:    Store the register data to memory.
+ * Paramters:           [MemAddr ] addr: the memory address need to be store to.
+ *                      [LdSt_Reg] reg: the register data need to be stored.                     
+ * Return:              [void    ]
+ * Usage:
+ */
 
+void M6502::Store2Mem(MemAddr addr, LdSt_Reg reg)
+{
+    Byte storeData = 0x00;
+    switch (reg)
+    {
+    case LdSt_Reg_A:
+        storeData = GetRegA();
+        break;
+    case LdSt_Reg_X:
+        storeData = GetRegX();
+        break;
+    case LdSt_Reg_Y:
+        storeData = GetRegY();
+        break;
+    default:
+        break;
+    }
+    mem[AddressConstraint(addr)] = storeData;
 }
 
-/*  *************************************** [LDA] * *************************************
-    *Loads a byte of memory into the accumulator setting the zeroand negative flags as appropriate.
+/*  *************************************** [LD*] * *************************************
+    * Loads a byte of memory into the * Register setting the zeroand negative flags as appropriate.
+    * [*] could be A, X, Y
     * C	Carry Flag	            Not affected
-    * Z	Zero Flag	            Set if A = 0
+    * Z	Zero Flag	            Set if * = 0
     * I	Interrupt Disable	    Not affected
     * D	Decimal Mode Flag	    Not affected
     * B	Break Command	        Not affected
     * V	Overflow Flag	        Not affected
-    * N	Negative Flag	        Set if bit 7 of A is set
+    * N	Negative Flag	        Set if bit 7 of * is set
     * 
     * 
+    *************************************** [ST*] * *************************************
+    *    Stores the contents of the * register into memory.
+    *    Processor Status after use:
+    *    C	Carry Flag	        Not affected
+    *    Z	Zero Flag	        Not affected
+    *    I	Interrupt Disable	Not affected
+    *    D	Decimal Mode Flag	Not affected
+    *    B	Break Command	    Not affected
+    *    V	Overflow Flag	    Not affected
+    *    N	Negative Flag	    Not affected
     *
     * ************************************* [JSR] **************************************
     * The JSR instruction pushes the address (minus one) of the return point on to the stack and
     * then sets the program counter to the target memory address.
     * Processor Status after use:
     * | [C] | [Carry Flag]            | Not affected |
-    * |-------------------------------|--------------|
     * | [Z] | [Zero Flag]             | Not affected |
     * | [I] | [Interrupt Disable]     | Not affected |
     * | [D] | [Decimal Mode Flag]     | Not affected |
@@ -691,6 +779,23 @@ void M6502::UpdateStatusReg(Instructions ins)
         AssignPRegFlag(P, Z, (GetReg(Y) == 0));
         AssignPRegFlag(P, N, ((GetReg(Y) & 0b10000000) > 0));
         break;
+
+    case INS_STA_ZP:
+    case INS_STA_ZP_X:
+    case INS_STA_ABS:
+    case INS_STA_ABS_X:
+    case INS_STA_ABS_Y:
+    case INS_STA_IND_X:
+    case INS_STA_IND_Y:
+    case INS_STX_ZP:
+    case INS_STX_ZP_Y:
+    case INS_STX_ABS:
+    case INS_STY_ZP:
+    case INS_STY_ZP_X:
+    case INS_STY_ABS:
+        //Not affected
+        break;
+
     case INS_JSR:
         break;
     }

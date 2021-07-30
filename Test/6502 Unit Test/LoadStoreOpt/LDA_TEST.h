@@ -1,5 +1,5 @@
-#ifndef _TEST_ENTRY_H_
-#define _TEST_ENTRY_H_
+#ifndef _LDA_TEST_H_
+#define _LDA_TEST_H_
 
 #include <cstdio>
 #include "gtest/gtest.h"
@@ -184,40 +184,6 @@ TEST_F(M6502_TEST_INS, M6502_TEST_INS_LDA_IND_Y)
     VerfityUnmodifiedFlagsFromLDA(CPU, CPU_Pre);
 }
 
-/* */
-
-#if 0
-class M6502Test1 : public testing::Test
-{
-public:
-    MOS6502::M6502 CPU;
-
-    virtual void SetUp()
-    {
-        CPU.reset();
-    }
-
-    virtual void TearDown()
-    {
-
-    }
-};
-
-
-TEST_F(M6502Test1, test)
-{
-    CPU.writeMem(0xFFFC, INS_JSR);
-    CPU.writeMem(0xFFFD, 0x42);
-    CPU.writeMem(0xFFFE, 0x42);
-    CPU.writeMem(0x4242, INS_LDA_IM);
-    CPU.writeMem(0x4243, 0x84);
-    CPU.exec(9);
-
-    EXPECT_EQ(CPU.GetRegA(), 0x84);
-}
-#endif
-
-#endif
 
 void VerfityUnmodifiedFlagsFromLDA(MOS6502::M6502 &CPU, MOS6502::M6502 &CPU_Pre)
 {
@@ -227,3 +193,4 @@ void VerfityUnmodifiedFlagsFromLDA(MOS6502::M6502 &CPU, MOS6502::M6502 &CPU_Pre)
     EXPECT_EQ(CPU.GetRegP_B(), CPU_Pre.GetRegP_B());
     EXPECT_EQ(CPU.GetRegP_V(), CPU_Pre.GetRegP_V());
 }
+#endif

@@ -64,6 +64,22 @@ enum Instructions
     INS_LDY_ABS     = 0xAC,
     INS_LDY_ABS_X   = 0xBC,
 
+    INS_STA_ZP      = 0x85,
+    INS_STA_ZP_X    = 0x95,
+    INS_STA_ABS     = 0x8D,
+    INS_STA_ABS_X   = 0x9D,
+    INS_STA_ABS_Y   = 0x99,
+    INS_STA_IND_X   = 0x81,
+    INS_STA_IND_Y   = 0x91,
+
+    INS_STX_ZP      = 0x86,
+    INS_STX_ZP_Y    = 0x96,
+    INS_STX_ABS     = 0x8E,
+
+    INS_STY_ZP      = 0x84,
+    INS_STY_ZP_X    = 0x94,
+    INS_STY_ABS     = 0x8C,
+
     INS_JSR         = 0x20,
 };
 
@@ -180,7 +196,7 @@ private:
     void write(Cycles& cycles, MemAddr addr,Byte dataWrite);
     MemAddr AddressConstraint(MemAddr addr);
     void Load2Reg(LdSt_Reg reg, Byte data);
-    void Store2Mem(LdSt_Reg reg, Byte data);
+    void Store2Mem(MemAddr addr, LdSt_Reg reg);
     void UpdateStatusReg(Instructions ins);
 private:
     /*Registers*/
